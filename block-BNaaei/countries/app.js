@@ -5,8 +5,13 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
 
+mongoose.connect("mongodb://127.0.0.1:27017/countries", { useNewUrlParser: true,  useUnifiedTopology: true},  (err) => {
+  console.log(err ? err : "connected to db");
+})
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var countryRouter = require('./routes/country');
+var stateRouter = require('./routes/states');
 
 var app = express();
 
@@ -20,8 +25,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api', indexRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/v1/countries', countryRouter);
+app.use('/api/v1/states', stateRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

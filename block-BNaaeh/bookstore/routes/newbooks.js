@@ -1,6 +1,7 @@
 let express = require('express');
 let router = express.Router();
 let Newbook = require('../models/newbooks');
+let Comment = require('../models/comments');
 
 //list all books
 router.get('/', (req, res, next) => {
@@ -52,9 +53,10 @@ router.delete('/:id', (req, res, next) => {
 //add comments
 router.post('/:id/comments', (req, res, next) => {
     let id = req.params.id;
+    req.body.bookId = id;
     Comment.create(req.body, (err, comment) => {
         if(err) return next(err);
-        Newbook.findByIdAndUpdate(id, {$push: {comments: id}}, (err, book) => {
+        Newbook.findByIdAndUpdate(id, {$push: {comments: comment.id}}, (err, book) => {
             if(err) return next(err);
             res.status(200).json({comment});
         })

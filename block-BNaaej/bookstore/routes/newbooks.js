@@ -1,11 +1,11 @@
 let express = require('express');
 let router = express.Router();
-let Newbook = require('../models/newbooks');
+let Book = require('../models/books');
 let Comment = require('../models/comments');
 
 //list all books
 router.get('/', (req, res, next) => {
-    Newbook.find({}, (err, books) => {
+    Book.find({}, (err, books) => {
         if(err) return next(err);
         res.status(200).json({books});
     })
@@ -14,7 +14,7 @@ router.get('/', (req, res, next) => {
 //list a single book
 router.get('/:id', (req, res, next) => {
     let id = req.params.id;
-    Newbook.findById(id).populate('comments').exec((err, book) => {
+    Book.findById(id).populate('comments').exec((err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -22,7 +22,7 @@ router.get('/:id', (req, res, next) => {
 
 //create a book
 router.post('/', (req, res, next) => {
-    Newbook.create(req.body, (err, book) => {
+    Book.create(req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -31,7 +31,7 @@ router.post('/', (req, res, next) => {
 //update a book
 router.put('/:id', (req, res, next) => {
     let id = req.params.id;
-    Newbook.findByIdAndUpdate(id, req.body, (err, book) => {
+    Book.findByIdAndUpdate(id, req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -40,7 +40,7 @@ router.put('/:id', (req, res, next) => {
 //delete a book
 router.delete('/:id', (req, res, next) => {
     let id = req.params.id;
-    Newbook.findByIdAndDelete(id, (err, book) => {
+    Book.findByIdAndDelete(id, (err, book) => {
         if(err) return next(err);
         Comment.deleteMany({booksId: id}, (err, result) => {
             if(err) return next(err);
@@ -56,7 +56,7 @@ router.post('/:id/comments', (req, res, next) => {
     req.body.bookId = id;
     Comment.create(req.body, (err, comment) => {
         if(err) return next(err);
-        Newbook.findByIdAndUpdate(id, {$push: {comments: comment.id}}, (err, book) => {
+        Book.findByIdAndUpdate(id, {$push: {comments: comment.id}}, (err, book) => {
             if(err) return next(err);
             res.status(200).json({comment});
         })

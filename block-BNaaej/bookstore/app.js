@@ -16,7 +16,6 @@ var bookRouter = require('./routes/books');
 var newBookRouter = require('./routes/newbooks');
 var commentRouter = require('./routes/comments');
 var updatedBookRouter = require('./routes/newbooks2');
-var updatedCommentRouter = require('./routes/comments2');
 
 var app = express();
 
@@ -36,7 +35,7 @@ app.use('/api/v1/books', bookRouter);
 app.use('/api/v2/books', newBookRouter);
 app.use('/api/v1/comments', commentRouter);
 app.use('/api/v3/books', updatedBookRouter);
-app.use('/api/v2/comments', updatedCommentRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

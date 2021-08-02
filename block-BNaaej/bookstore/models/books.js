@@ -6,7 +6,9 @@ let bookSchema = new Schema({
     summary: {type: String, required: true},
     tags: [String], 
     author: String,
-    pages: Number
+    pages: Number,
+    comments: [{type: Schema.Types.ObjectId, ref: "Comment"}],
+    category: [String],
 }, {timestamps: true});
 
 module.exports = mongoose.model("Book", bookSchema);

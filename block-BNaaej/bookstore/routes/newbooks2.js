@@ -1,11 +1,11 @@
 let express = require('express');
 let router = express.Router();
 let Comment = require('../models/comments');
-let Updatedbook = require('../models/newbooks2');
+let Book = require('../models/books');
 
 //list all books
 router.get('/', (req, res, next) => {
-    Updatedbook.find({}, (err, books) => {
+    Book.find({}, (err, books) => {
         if(err) return next(err);
         res.status(200).json({books});
     })
@@ -14,7 +14,7 @@ router.get('/', (req, res, next) => {
 //list a single book
 router.get('/:id', (req, res, next) => {
     let id = req.params.id;
-    Updatedbook.findById(id).populate('comments').exec((err, book) => {
+    Book.findById(id).populate('comments').exec((err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -22,7 +22,8 @@ router.get('/:id', (req, res, next) => {
 
 //create a book
 router.post('/', (req, res, next) => {
-    Updatedbook.create(req.body, (err, book) => {
+    console.log(req.body);
+    Book.create(req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -31,7 +32,7 @@ router.post('/', (req, res, next) => {
 //update a book
 router.put('/:id', (req, res, next) => {
     let id = req.params.id;
-    Updatedbook.findByIdAndUpdate(id, req.body, (err, book) => {
+    Book.findByIdAndUpdate(id, req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -40,7 +41,7 @@ router.put('/:id', (req, res, next) => {
 //delete a book
 router.delete('/:id', (req, res, next) => {
     let id = req.params.id;
-    Updatedbook.findByIdAndDelete(id, (err, book) => {
+    Book.findByIdAndDelete(id, (err, book) => {
         if(err) return next(err);
         Comment.deleteMany({booksId: id}, (err, result) => {
             if(err) return next(err);
@@ -56,7 +57,7 @@ router.post('/:id/comments', (req, res, next) => {
     req.body.bookId = id;
     Comment.create(req.body, (err, comment) => {
         if(err) return next(err);
-        Updatedbook.findByIdAndUpdate(id, {$push: {comments: comment.id}}, (err, book) => {
+        Book.findByIdAndUpdate(id, {$push: {comments: comment.id}}, (err, book) => {
             if(err) return next(err);
             res.status(200).json({comment});
         })
@@ -67,7 +68,7 @@ router.post('/:id/comments', (req, res, next) => {
 router.put('/:id/addCategory', (req, res, next) => {
     let id = req.params.id;
     req.body.category = req.body.category.trim().split(" ");
-    Updatedbook.findByIdAndUpdate(id, req.body, (err, book) => {
+    Book.findByIdAndUpdate(id, req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -77,7 +78,7 @@ router.put('/:id/addCategory', (req, res, next) => {
 router.put('/:id/editCategory', (req, res, next) => {
     let id = req.params.id;
     req.body.category = req.body.category.trim().split(" ");
-    Updatedbook.findByIdAndUpdate(id, req.body, (err, book) => {
+    Book.findByIdAndUpdate(id, req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -85,24 +86,26 @@ router.put('/:id/editCategory', (req, res, next) => {
 
 //list all categories
 router.get('/list/Category', (req, res, next) => {
-    Updatedbook.find({}).distinct('category').exec((err, category) => {
+    Book.find({}).distinct('category').exec((err, category) => {
         if(err) return next(err);
         res.status(200).json({category})
     })
 });
 
 //list books by category
-router.get('/list/category/:id', (req, res, next) => {
-    let category = req.params.id;
-    Updatedbook.find({category}, (err, book) => {
+router.get('/list/byCategory', (req, res, next) => {
+    Book.aggregate([
+        {$unwind: "$category"}
+    ]).exec((err, books) => {
         if(err) return next(err);
-        res.status(200).json({book});
+        res.status(200).json({books});  
     })
+    
 });
 
 //count books by category
 router.get('/countby/category', (req, res, next) => {
-    Updatedbook.aggregate([
+        Book.aggregate([
         {$unwind: "$category"},
         {$group: {_id: "$category", count: {$sum: 1}}}
     ]).exec((err, result) => {
@@ -113,12 +116,13 @@ router.get('/countby/category', (req, res, next) => {
 
 //list book by author
 router.get('/filter/byauthor', (req, res, next) => {
-    Updatedbook.aggregate([
-        {$project: {
-            author: '$author',
-            book: '$title'
+    Book.aggregate([
+        {$group: {
+            _id: "$author", 
+            "books": {
+                $push: "$$ROOT"
         }}
-        
+    }
 
     ]).exec((err, result) => {
         if(err) return next(err);
@@ -130,7 +134,7 @@ router.get('/filter/byauthor', (req, res, next) => {
 router.put('/:id/addtags', (req, res, next) => {
     let id = req.params.id;
     req.body.tags = req.body.tags.trim().split(" ");
-    Updatedbook.findByIdAndUpdate(id, req.body, (err, book) => {
+    Book.findByIdAndUpdate(id, req.body, (err, book) => {
         if(err) return next(err);
         res.status(200).json({book});
     })
@@ -138,7 +142,7 @@ router.put('/:id/addtags', (req, res, next) => {
 
 //list all tags in ascending order
 router.get('/filter/tags', (req, res, next) => {
-    Updatedbook.aggregate([
+    Book.aggregate([
         {$unwind: '$tags'},
         {$sort: {'tags': 1}}
     ]).exec((err, result) => {
@@ -148,17 +152,18 @@ router.get('/filter/tags', (req, res, next) => {
     
 });
 
-//filter books by category
-router.get('/list/tags/:id', (req, res, next) => {
-    let tags = req.params.id;
-    Updatedbook.find({tags}, (err, book) => {
+//filter books by tags
+router.get('/list/tags/', (req, res, next) => {
+    Book.aggregate([
+        {$unwind: "$tags"}
+    ]).exec((err, result) => {
         if(err) return next(err);
-        res.status(200).json({book});
+        res.status(200).json({result});
     })
 });
 
 router.get('/countby/tags', (req, res, next) => {
-    Updatedbook.aggregate([
+    Book.aggregate([
         {$unwind: "$tags"},
         {$group: {_id: "$tags", count: {$sum: 1}}}
     ]).exec((err, result) => {
